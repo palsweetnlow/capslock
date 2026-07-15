@@ -1,38 +1,44 @@
 /*
- * Title: CapsLock
+ * Title: CapsLock-Gen
  * Description:
- * Use the CAPS LOCK key to change the cover opening and closing behavior
+ * Use the CAPS LOCK key to launch batch file
  * Author: Yoshihiro Satoh (yosihiro.com)
  */
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <windows.h>
 
-int main() {
-  int caps=0;
-  printf("Caps LockキーがONのときには、ノートPCのカバーを閉じても無視するようにします。\n");
-  printf("Caps LockキーがOFFのときには、元のカバー設定の内容によらずスリープになります。\n\n");
+void execBat( char *filename ) {
+  FILE *fp = fopen(filename, "r");
+  if (fp != NULL) {
+    fclose(fp);
+    printf("Launched: %s\n",filename);
+    system(filename);
+  } else {
+    printf("File does not exist: %s\n",filename);
+  }
+}
 
+int main() {
+  printf("When CAPS lock key is ON, CapsLock-ON.bat is executed.\n");
+  printf("When CAPS lock key is OFF, CapsLock-OFF.bat is executed.\n\n");
+
+  bool caps = (GetKeyState(VK_CAPITAL)&0x0001? true: false);
   while(1) {
     SHORT state = GetKeyState(VK_CAPITAL);
     if (state & 0x0001) {
-      if( caps != 2 ) {
-        printf("Caps Lock が ON になりました。\n");
+      if( !caps ) {
+        printf("The CAPS Key is now ON.\n");
         MessageBeep(MB_OK);
-        system("powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0");
-        system("powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0");
-        Sleep(1000);
-        system("powercfg /setactive SCHEME_CURRENT");
-        caps=2;
+        execBat("CapsLock-ON.bat");
+        caps=true;
       }
     } else {
-      if( caps != 1 ) {
-        printf("\aCaps Lock が OFF になりました。\n");
-        system("powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1");
-        system("powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1");
-        Sleep(1000);
-        system("powercfg /setactive SCHEME_CURRENT");
-        caps=1;
+      if( caps ) {
+        printf("\aThe CAPS Key is now OFF.\n");
+        execBat("CapsLock-OFF.bat");
+        caps=false;
       }
     }
     Sleep(5000);
